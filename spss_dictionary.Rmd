@@ -1,0 +1,94 @@
+---
+title: "SPSS Dictionary"
+output: html_notebook
+---
+
+```{r}
+library(gt)
+library(tidyverse)
+```
+
+## Format attributes in a dataframe
+
+```{r}
+format_labels_values <- function(df){
+  # Inputs a raw df from SPSS
+  # Outputs a table with each row being a variable names, it's SPSS label and it's value labels
+  
+  get_value_labels <- function(var){
+  
+    if ("labels" %in% names(attributes(df[[var]]))){
+    
+      value = paste(attributes(df[[var]])$labels)
+      label = names(attributes(df[[var]])$labels)
+    
+      paste(value, "=", label, collapse = "<br>")
+    
+    } else NA_character_
+  
+  }  
+    
+  get_variable_labels <- function(var){
+    
+    if ("label" %in% names(attributes(df[[var]]))){
+      
+      as.character(attributes(df[[var]])$label) %>% 
+        stringr::str_remove("^\\d+[.]")
+      
+    } else NA_character_
+    
+  }
+
+  tibble(Variable = names(df)) %>% 
+  mutate(Label = map_chr(Variable, get_variable_labels),
+         Values = map_chr(Variable, get_value_labels)) 
+  
+}
+```
+
+## Returning formatted table
+
+```{r}
+spss_dictionary <- function(df, return_df = F, DT = F){
+
+  # Format labels
+  df_dict <- format_labels_values(df)
+  
+  # Can return a tidy tibble
+  if(return_df == T) 
+    df_dict
+  
+  # Can return result a DT searchable HTML format
+  if(DT == T) {
+    DT::datatable(df_dict) 
+  
+  # Otherwise returns a GT formatted table  
+  } else {
+    gt::gt(df_dict) %>% 
+    gt::fmt_markdown(everything()) %>% 
+    gt::fmt_missing(everything(), missing_text =  "---") %>% 
+    gt::tab_style(locations = cells_body(),
+                  style = "vertical-align:top") %>%  
+    
+    gt::opt_table_lines(extent = "none") %>%
+    gt::tab_options(
+        data_row.padding = gt::px(1),
+        heading.border.bottom.width = 2,
+        heading.border.bottom.style = "solid",
+        table.border.top.color = "white",
+        table_body.border.top.width = 1,
+        heading.title.font.size = 13,
+        table.font.size = 12,
+        table_body.border.bottom.width = 1,
+        table_body.border.bottom.style = "solid",
+        column_labels.border.bottom.style = "solid",
+        column_labels.border.bottom.width = 1)
+  }
+}
+
+```
+
+```{r}
+spss_dictionary(df)
+```
+

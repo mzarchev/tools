@@ -1,0 +1,36 @@
+---
+title: "Translate SPSS file"
+output: html_notebook
+---
+
+```{r}
+df <- df_diaries_raw
+
+translate_labels <- function(df){
+  # Input raw SPSS dataframe with untranslated label attribute
+  # Outputs dataframe with translated label attribute and saves an SPSS copy
+  API_key = "b3160428-175d-326a-ef1b-087732ba4f26:fx"
+  
+  # Check each of the attributes
+  for(i in 1:ncol(df)){
+
+  # If no label skip
+    if (is.null(attributes(df[[i]])$label)) next
+
+  # Else translate and replace label
+    attributes(df[[i]])$label <-
+      deeplr::translate2(text = attributes(df_diaries_raw[[i]])$label,
+                         source_lang = "NL",
+                         target_lang = "EN",
+                         auth_key = API_key)
+  }
+  
+  # Export df
+  haven::write_sav(df, "translated.sav")
+}
+
+translate_labels(df)
+deeplr::usage2(API_key)
+  
+```
+
